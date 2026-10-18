@@ -1,0 +1,18 @@
+# Vaultwarden - self-hosted, Bitwarden-compatible password manager.
+# Reachable only over Tailscale: bound to localhost, published with `tailscale serve`.
+services:
+  vaultwarden:
+    image: vaultwarden/server:1.37.4
+    container_name: vaultwarden
+    restart: unless-stopped
+    environment:
+      DOMAIN: "${VW_DOMAIN}"
+      SIGNUPS_ALLOWED: "${VW_SIGNUPS_ALLOWED:-false}"
+      INVITATIONS_ALLOWED: "false"
+      SHOW_PASSWORD_HINT: "false"
+    volumes:
+      - /srv/vaultwarden:/data
+    ports:
+      - "127.0.0.1:8080:80"
+    security_opt:
+      - no-new-privileges:true
