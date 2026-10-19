@@ -1,0 +1,45 @@
+// ikhaya -> Grafana Cloud. Secrets come from /etc/default/alloy, never from this file.
+
+// Host metrics: CPU, memory, disk, network, Wi-Fi.
+prometheus.exporter.unix "ikhaya" { }
+
+prometheus.scrape "node" {
+  targets         = prometheus.exporter.unix.ikhaya.targets
+  scrape_interval = "60s"
+  forward_to      = [prometheus.relabel.instance.receiver]
+}
+
+prometheus.relabel "instance" {
+  rule {
+    target_label = "instance"
+    replacement  = "ikhaya"
+  }
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GCLOUD_METRICS_URL")
+    basic_auth {
+      username = sys.env("GCLOUD_METRICS_USER")
+      password = sys.env("GCLOUD_API_KEY")
+    }
+  }
+}
+
+// System logs (journal), readable from anywhere.
+loki.source.journal "system" {
+  max_age    = "12h"
+  labels     = { job = "systemd-journal", instance = "ikhaya" }
+  forward_to = [loki.write.grafana_cloud.receiver]
+}
+
+loki.write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GCLOUD_LOGS_URL")
+    basic_auth {
+      username = sys.env("GCLOUD_LOGS_USER")
+      password = sys.env("GCLOUD_API_KEY")
+    }
+  }
+}

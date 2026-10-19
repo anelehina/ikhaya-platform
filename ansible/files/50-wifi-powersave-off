@@ -1,0 +1,5 @@
+#!/bin/sh
+# Turn Wi-Fi power-saving off whenever wlp2s0 comes up.
+# Reason: QCA9377 (ath10k) silently dropped the link with power-saving on (incident 2026-10-19).
+[ "$IFACE" = "wlp2s0" ] && /usr/sbin/iw dev wlp2s0 set power_save off
+exit 0
