@@ -65,7 +65,7 @@ Until automated encrypted backups (restic) are in place:
 sudo docker compose stop
 sudo tar -czf ~/vaultwarden-$(date +%F).tar.gz -C /srv vaultwarden
 sudo docker compose start
-chmod 600 ~/vaultwarden-*.tar.gz
+sudo chmod 600 ~/vaultwarden-*.tar.gz
 ```
 
 The archive contains the database and the server's private keys. Treat it as a secret. A copy on the same disk is not a backup; it only protects against bad upgrades.
