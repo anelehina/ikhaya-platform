@@ -1,0 +1,45 @@
+---
+# Manages ikhaya's host configuration from Git.
+# Always dry-run first: ansible-playbook host.yml -K --check --diff
+- name: Manage ikhaya host configuration
+  hosts: homelab
+  become: true
+  gather_facts: false
+
+  vars:
+    alloy_version: "1.21.0-1"
+
+  handlers:
+    - name: Restart alloy
+      ansible.builtin.systemd_service:
+        name: alloy
+        state: restarted
+
+  tasks:
+    - name: Wi-Fi power-saving hook is in place
+      ansible.builtin.copy:
+        src: files/50-wifi-powersave-off
+        dest: /etc/networkd-dispatcher/routable.d/50-wifi-powersave-off
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Alloy is installed at the pinned version
+      ansible.builtin.apt:
+        name: "alloy={{ alloy_version }}"
+        state: present
+        allow_change_held_packages: true
+
+    - name: Alloy is held so apt upgrade cannot change it
+      ansible.builtin.dpkg_selections:
+        name: alloy
+        selection: hold
+
+    - name: Alloy config matches Git
+      ansible.builtin.copy:
+        src: files/config.alloy
+        dest: /etc/alloy/config.alloy
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart alloy
