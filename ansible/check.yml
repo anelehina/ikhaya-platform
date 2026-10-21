@@ -15,6 +15,7 @@
       ansible.builtin.command: ufw status verbose
       register: ufw
       changed_when: false
+      check_mode: false
 
     - name: UFW is active and denies incoming by default
       ansible.builtin.assert:
@@ -28,6 +29,7 @@
       ansible.builtin.command: sshd -T
       register: sshd
       changed_when: false
+      check_mode: false
 
     - name: SSH allows keys only and no root login
       ansible.builtin.assert:
@@ -41,6 +43,7 @@
       ansible.builtin.command: iw dev wlp2s0 get power_save
       register: powersave
       changed_when: false
+      check_mode: false
 
     - name: Wi-Fi power-saving is off
       ansible.builtin.assert:
@@ -67,3 +70,17 @@
       ansible.builtin.uri:
         url: http://127.0.0.1:8080/alive
         status_code: 200
+      check_mode: false
+
+    - name: Read held packages
+      ansible.builtin.command: apt-mark showhold
+      register: held
+      changed_when: false
+      check_mode: false
+
+    - name: Alloy is held at its pinned version
+      ansible.builtin.assert:
+        that:
+          - "'alloy' in held.stdout_lines"
+        success_msg: "alloy is held"
+        fail_msg: "alloy is NOT held - run host.yml"
