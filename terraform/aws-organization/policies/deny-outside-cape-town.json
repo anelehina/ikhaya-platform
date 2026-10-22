@@ -1,0 +1,64 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyAllOutsideCapeTown",
+      "Effect": "Deny",
+      "NotAction": [
+        "a4b:*",
+        "account:*",
+        "acm:*",
+        "aws-marketplace-management:*",
+        "aws-marketplace:*",
+        "aws-portal:*",
+        "billing:*",
+        "budgets:*",
+        "ce:*",
+        "chime:*",
+        "cloudfront:*",
+        "config:*",
+        "cur:*",
+        "directconnect:*",
+        "ec2:DescribeRegions",
+        "ec2:DescribeTransitGateways",
+        "ec2:DescribeVpnGateways",
+        "fms:*",
+        "freetier:*",
+        "globalaccelerator:*",
+        "health:*",
+        "iam:*",
+        "importexport:*",
+        "invoicing:*",
+        "kms:*",
+        "networkmanager:*",
+        "organizations:*",
+        "payments:*",
+        "pricing:*",
+        "route53:*",
+        "route53domains:*",
+        "s3:GetAccountPublic*",
+        "s3:ListAllMyBuckets",
+        "s3:ListMultiRegionAccessPoints",
+        "s3:PutAccountPublic*",
+        "shield:*",
+        "sso:*",
+        "sts:*",
+        "support:*",
+        "tax:*",
+        "trustedadvisor:*",
+        "waf:*",
+        "waf-regional:*",
+        "wafv2:*",
+        "wellarchitected:*"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": {
+          "aws:RequestedRegion": [
+            "af-south-1"
+          ]
+        }
+      }
+    }
+  ]
+}
