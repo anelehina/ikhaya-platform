@@ -15,6 +15,10 @@
         name: alloy
         state: restarted
 
+    - name: Reload systemd
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+
   tasks:
     - name: Wi-Fi power-saving hook is in place
       ansible.builtin.copy:
@@ -23,6 +27,44 @@
         owner: root
         group: root
         mode: "0755"
+
+    - name: Drop-in folder for networkd-dispatcher exists
+      ansible.builtin.file:
+        path: /etc/systemd/system/networkd-dispatcher.service.d
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: networkd-dispatcher starts only after the Wi-Fi rename
+      ansible.builtin.copy:
+        src: files/networkd-dispatcher-after-wifi.conf
+        dest: /etc/systemd/system/networkd-dispatcher.service.d/10-after-wifi-rename.conf
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Reload systemd
+
+    - name: Safety-net service and timer for Wi-Fi power-saving
+      ansible.builtin.copy:
+        src: "files/{{ item }}"
+        dest: "/etc/systemd/system/{{ item }}"
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - wifi-powersave-off.service
+        - wifi-powersave-off.timer
+      notify: Reload systemd
+
+    - name: Apply systemd changes before enabling the timer
+      ansible.builtin.meta: flush_handlers
+
+    - name: Safety-net timer is enabled and running
+      ansible.builtin.systemd_service:
+        name: wifi-powersave-off.timer
+        enabled: true
+        state: started
 
     - name: Alloy is installed at the pinned version
       ansible.builtin.apt:

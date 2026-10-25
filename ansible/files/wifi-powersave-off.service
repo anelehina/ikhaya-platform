@@ -1,0 +1,7 @@
+[Unit]
+Description=Turn Wi-Fi power-saving off on wlp2s0 (safety net, incident 2026-10-25)
+After=sys-subsystem-net-devices-wlp2s0.device
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/iw dev wlp2s0 set power_save off
