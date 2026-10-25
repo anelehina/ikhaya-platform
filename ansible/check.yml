@@ -84,3 +84,16 @@
           - "'alloy' in held.stdout_lines"
         success_msg: "alloy is held"
         fail_msg: "alloy is NOT held - run host.yml"
+    - name: Read Wi-Fi safety-net timer state
+      ansible.builtin.command: systemctl is-active wifi-powersave-off.timer
+      register: wifitimer
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Wi-Fi safety-net timer is active
+      ansible.builtin.assert:
+        that:
+          - "wifitimer.stdout == 'active'"
+        success_msg: "wifi-powersave-off.timer active"
+        fail_msg: "Wi-Fi safety-net timer is NOT active - run host.yml"
