@@ -1,6 +1,6 @@
 services:
   resume-site:
-    image: resume-site:v1
+    image: resume-site:v3
     container_name: resume-site
     restart: unless-stopped
     ports:
@@ -17,3 +17,10 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+    networks:
+      - default
+      - edge
+
+networks:
+  edge:
+    external: true
