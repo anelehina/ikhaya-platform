@@ -1,6 +1,6 @@
 services:
   resume-site:
-    image: resume-site:v3
+    image: resume-site:v4
     container_name: resume-site
     restart: unless-stopped
     ports:
