@@ -1,0 +1,19 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.3
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: "${TUNNEL_TOKEN}"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - edge
+
+networks:
+  edge:
+    external: true
