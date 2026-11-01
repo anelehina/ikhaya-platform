@@ -72,9 +72,9 @@ A Grafana Synthetic Monitoring HTTP check now probes `https://anelehina.com/heal
 | about 22:42 | First failed run; both probes (Cape Town and London) report errors |
 | 22:47 | Alert email received: "ProbeFailedExecutionsTooHigh [10m] ... has failed 4 times in the last 10m" |
 | 22:48:26 | `docker compose start` (restore); `curl https://anelehina.com/healthz` returns `ok` at once |
-| next runs | Checks green again; "Resolved" email at `__:__` |
+| 22:57 | Checks green again; "Resolved" email received (failures aged out of the 10-minute window; about 9 minutes after the restore) |
 
-Result: about **6 minutes** from outage to email, and the site served again within seconds of the restart. The probes also gave a baseline: Cape Town about 200 ms, London about 540 ms, and most of each request is "processing" (the trip through the tunnel to the laptop), not TLS or DNS.
+Result: about **6 minutes** from outage to email, and the site served again within seconds of the restart, and the alert cleared about 9 minutes later. The probes also gave a baseline: Cape Town about 200 ms, London about 540 ms, and most of each request is "processing" (the trip through the tunnel to the laptop), not TLS or DNS.
 
 ## What went well
 
