@@ -1,0 +1,12 @@
+# Runs the read-only health check (ansible/check.yml) and logs one clear result line.
+# Grafana alerts on "ikhaya-check: FAIL", and on no "ikhaya-check: PASS" for 13 hours.
+[Unit]
+Description=ikhaya read-only health check (ansible check.yml)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/anele/ikhaya-platform/ansible
+ExecStart=/bin/sh -c 'if /usr/bin/ansible-playbook check.yml; then echo "ikhaya-check: PASS"; else rc=$?; echo "ikhaya-check: FAIL rc=$rc"; exit $rc; fi'
+TimeoutStartSec=15min

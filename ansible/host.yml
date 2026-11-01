@@ -57,12 +57,30 @@
         - wifi-powersave-off.timer
       notify: Reload systemd
 
-    - name: Apply systemd changes before enabling the timer
+    - name: Scheduled health check service and timer
+      ansible.builtin.copy:
+        src: "files/{{ item }}"
+        dest: "/etc/systemd/system/{{ item }}"
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - ikhaya-check.service
+        - ikhaya-check.timer
+      notify: Reload systemd
+
+    - name: Apply systemd changes before enabling the timers
       ansible.builtin.meta: flush_handlers
 
     - name: Safety-net timer is enabled and running
       ansible.builtin.systemd_service:
         name: wifi-powersave-off.timer
+        enabled: true
+        state: started
+
+    - name: Health check timer is enabled and running
+      ansible.builtin.systemd_service:
+        name: ikhaya-check.timer
         enabled: true
         state: started
 
