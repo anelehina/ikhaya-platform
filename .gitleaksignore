@@ -1,0 +1,4 @@
+# Accepted findings. Each one is reviewed and recorded; nothing is ignored silently.
+# PR #18 put a home path in a unit file. Fixed in the current files (templated);
+# the old commit is accepted rather than rewriting public history (decision 29 review, Nov 2026).
+5db5b27f0f06436f34c2ac7f0dd014c868bd7caa:ansible/files/ikhaya-check.service:home-directory-path:10

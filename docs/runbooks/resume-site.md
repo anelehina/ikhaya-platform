@@ -16,14 +16,14 @@ Browser ──HTTPS──▶ Cloudflare edge ──tunnel (dialled out by ikhaya
 | Routes and DNS | Cloudflare dashboard: Networking → Tunnels → `ikhaya` → Routes (`anelehina.com`, `www`) |
 | TLS | Cloudflare managed Universal certificate; nothing on ikhaya holds a certificate |
 | Health endpoint | `https://anelehina.com/healthz` returns `ok` |
-| Monitoring | Grafana Synthetic Monitoring check `resume-site` (Cape Town + London, every 2 min); host alert "ikhaya is silent" |
+| Monitoring | External HTTPS check of `/healthz` from more than one region (Grafana Synthetic Monitoring); host alert "ikhaya is silent". Exact settings are kept privately |
 
 ## Alerts
 
 | Alert | Means | Go to |
 |---|---|---|
-| `ProbeFailedExecutionsTooHigh` (4 of 10 failed in 10 min) | Visitors can't load the site | [Site down](#site-down) |
-| TLS certificate expires in under 14 days | Cloudflare's auto-renewal has not happened | [Certificate](#certificate-expiring) |
+| Site check failing | Visitors can't load the site | [Site down](#site-down) |
+| TLS certificate expiring soon | Cloudflare's auto-renewal has not happened | [Certificate](#certificate-expiring) |
 | "ikhaya is silent" at the same time | The whole server or its internet is down, not just the site | The host first: see the earlier postmortems in `docs/postmortems/` |
 
 ## Site down
@@ -84,14 +84,14 @@ Nothing to renew on ikhaya. In Cloudflare: anelehina.com → SSL/TLS → Edge Ce
 
 ## Drill
 
-Proves the alert still reaches a person. Takes about 12 minutes of downtime; do it late at night.
+Proves the alert still reaches a person. Causes some minutes of downtime; do it late at night.
 
 ```bash
 cd ~/ikhaya-platform/compose/resume-site
 date '+%H:%M:%S drill start'; sudo docker compose stop
-# wait for the alert email (about 6 minutes)
+# wait for the alert email
 date '+%H:%M:%S restore'; sudo docker compose start
 curl -s https://anelehina.com/healthz
 ```
 
-Last drill: 31 Oct 2026, outage to email in about 6 minutes (`docs/postmortems/2026-10-24-power-outages.md`).
+Last drill: 31 Oct 2026, passed (`docs/postmortems/2026-10-24-power-outages.md`).
