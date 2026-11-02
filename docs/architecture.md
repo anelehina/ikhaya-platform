@@ -30,7 +30,7 @@ flowchart LR
     subgraph GC["Grafana Cloud (EU)"]
         Prom["Prometheus<br/>metrics"]
         Loki["Loki<br/>logs"]
-        Alert["Alert: no data 5 min"]
+        Alert["Alert: no data"]
     end
 
     GH["GitHub<br/>ikhaya-platform<br/>protected main, PRs only"]
@@ -95,7 +95,7 @@ flowchart LR
 |---|---|
 | Decisions | [Architecture Decision Records](adr/) |
 | Incidents | [Postmortems](postmortems/), starting with the [2026-10-19 Wi-Fi outage](postmortems/2026-10-19-wifi-outage.md) |
-| Monitoring | Grafana Cloud: host metrics, system logs, "ikhaya is silent" alert (~10 min detection, drill-tested) |
+| Monitoring | Grafana Cloud: host metrics, system logs, "ikhaya is silent" alert (drill-tested) |
 
 ## Roadmap
 

@@ -6,7 +6,7 @@
 
 ## Summary
 
-Two outages on 24-25 October took ikhaya offline for about 8 hours and then about 17.5 hours. The first was a power cut that outlasted the laptop's battery; the second, starting 11 minutes after it booted again, was mainly the home internet not recovering after the power cut. The Grafana "ikhaya is silent" alert fired and cleared each time. After the restart, the read-only health check (`check.yml`) failed: Wi-Fi power-saving was back on, the setting behind the 19 October outage. The cause was a boot-time race between `networkd-dispatcher` and the kernel renaming the Wi-Fi card. It was fixed with a systemd drop-in plus a timer and proved with a reboot (PR #12).
+Two outages on 24-25 October took ikhaya offline for about 8 hours and then about 17.5 hours. The first was a power cut that outlasted the laptop's battery; the second, starting shortly after it booted again, was mainly the home internet not recovering after the power cut. The Grafana "ikhaya is silent" alert fired and cleared each time. After the restart, the read-only health check (`check.yml`) failed: Wi-Fi power-saving was back on, the setting behind the 19 October outage. The cause was a boot-time race between `networkd-dispatcher` and the kernel renaming the Wi-Fi card. It was fixed with a systemd drop-in plus a timer and proved with a reboot (PR #12).
 
 On 31 October, after the resume site went live, a planned drill proved that the new external uptime check detects an outage of the public site and emails within minutes.
 
@@ -23,15 +23,13 @@ From Grafana **Alerting → History** ("ikhaya is silent": Normal → Pending �
 | Time | Event |
 |---|---|
 | 24 Oct ~13:01 | Power cut. ikhaya stops sending metrics; the laptop keeps running on battery |
-| 24 Oct 13:02:40 | Alert pending |
-| 24 Oct 13:07:40 | Alert **firing**, email sent |
+| 24 Oct, within minutes | Alert **firing**, email sent |
 | 24 Oct 17:53:14 | Last journal entry of that boot: the battery runs out and the laptop goes off (about 4 h 50 min on battery) |
 | 24 Oct 21:18:02 | Power back; ikhaya boots |
-| 24 Oct 21:19:40 | Alert **resolved** (outage 1: about 8 h 17 min) |
+| 24 Oct, shortly after | Alert **resolved** (outage 1: about 8 h) |
 | 24 Oct 21:22-21:23 | Short "Saturation" (CPU) warning while services start after boot; cleared by itself |
-| 24 Oct 21:30:40 | Alert pending again, 11 minutes after recovery |
-| 24 Oct 21:35:40 | Alert **firing** |
-| 25 Oct 15:00:40 | Alert **resolved** (outage 2: about 17 h 30 min). The laptop did not reboot in between |
+| 24 Oct ~21:30 | ikhaya goes silent again, shortly after recovery; alert **firing** |
+| 25 Oct ~15:00 | Alert **resolved** (outage 2: about 17.5 h). The laptop did not reboot in between |
 | 25 Oct | `check.yml` fails: Wi-Fi power-saving **on** since the 21:18 boot |
 | 25 Oct 19:24 | Cause found (boot race); drop-in + timer added; **planned** reboot test (19:24:04 to 19:24:13) passes; PR #12 merged (`88ba032`) |
 
@@ -44,7 +42,7 @@ From Grafana **Alerting → History** ("ikhaya is silent": Normal → Pending �
 - **21:31:30:** the Wi-Fi race happened. `networkd-dispatcher` ran the power-saving hook against `wlan0` and failed (`Interface "wlan0" not found`), so power-saving stayed on. But at the same second the Wi-Fi link connected, got its address and gateway, and Tailscale rebound to it.
 - **21:45 to 14:58:** the router's multicast packets kept arriving (370 logged by UFW, against roughly 500 expected at one every ~2 minutes). So the Wi-Fi link to the router was up for most of the outage, yet no data reached Grafana: the router had no internet. This matches the 22 October provider outage, here most likely the line not recovering after the power cut.
 - **About 4 hours without router messages** fall somewhere in that window, so the link or the router was also down for part of it. Exactly when is not pinned down.
-- **14:56-14:57:** the Wi-Fi re-authenticated and reconnected; **14:58:39** Tailscale reached its relay again; **15:00:40** the alert resolved.
+- **14:56-14:57:** the Wi-Fi re-authenticated and reconnected; **14:58:39** Tailscale reached its relay again; the alert resolved shortly after.
 
 Conclusion: the race was real and is fixed (PR #12), but the evidence does not show it caused this outage. The power cut's aftermath upstream did.
 
@@ -52,7 +50,7 @@ Conclusion: the race was real and is fixed (PR #12), but the evidence does not s
 
 ## Detection
 
-- **Outages:** the "ikhaya is silent" dead man's switch (no metrics for 5 minutes), by email. Detected in minutes, compared with 12.5 hours on 19 October.
+- **Outages:** the "ikhaya is silent" dead man's switch (no metrics for a few minutes), by email. Detected in minutes, compared with 12.5 hours on 19 October.
 - **Wi-Fi race:** `check.yml`, run by hand after the restart. Nothing alerted on it automatically.
 
 ## Resolution
@@ -64,17 +62,16 @@ Conclusion: the race was real and is fixed (PR #12), but the evidence does not s
 
 ## The 31 Oct drill: external uptime check
 
-A Grafana Synthetic Monitoring HTTP check now probes `https://anelehina.com/healthz` from Cape Town and London every 2 minutes. It expects `200`, HTTPS, and a body starting with `ok`. It alerts when 4 of 10 runs fail within 10 minutes, and when the certificate has fewer than 14 days left. Alerts route to email (`namespace = synthetic_monitoring` policy).
+An external HTTPS check (Grafana Synthetic Monitoring) now requests `https://anelehina.com/healthz` from more than one region and alerts by email when the site fails repeatedly or its certificate nears expiry.
 
 | Time | Event |
 |---|---|
-| about 22:41 | `docker compose stop` on `resume-site` (drill start) |
-| about 22:42 | First failed run; both probes (Cape Town and London) report errors |
-| 22:47 | Alert email received: "ProbeFailedExecutionsTooHigh [10m] ... has failed 4 times in the last 10m" |
-| 22:48:26 | `docker compose start` (restore); `curl https://anelehina.com/healthz` returns `ok` at once |
-| 22:57 | Checks green again; "Resolved" email received (failures aged out of the 10-minute window; about 9 minutes after the restore) |
+| drill start | `docker compose stop` on `resume-site` |
+| within minutes | First failed runs from every probe location, then the alert email |
+| restore | `docker compose start`; `curl https://anelehina.com/healthz` returns `ok` at once |
+| shortly after | Checks green again; "Resolved" email received |
 
-Result: about **6 minutes** from outage to email, and the site served again within seconds of the restart, and the alert cleared about 9 minutes later. The probes also gave a baseline: Cape Town about 200 ms, London about 540 ms, and most of each request is "processing" (the trip through the tunnel to the laptop), not TLS or DNS.
+Result: the alert reached a person within minutes of the outage, the site served again within seconds of the restart, and the alert cleared on its own after recovery.
 
 ## What went well
 

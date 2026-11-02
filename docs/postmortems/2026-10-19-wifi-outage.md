@@ -39,13 +39,13 @@ Wi-Fi power-saving was enabled on the Qualcomm Atheros QCA9377 adapter (`ath10k_
 |---|---|
 | Disable Wi-Fi power-saving on every link-up (`networkd-dispatcher` hook, `ansible/files/50-wifi-powersave-off`) | Done, verified after reboot and after reconnect |
 | Grafana Cloud + Grafana Alloy: host metrics and system logs shipped off-host (`ansible/files/config.alloy`, secrets kept outside Git) | Done |
-| Alert "ikhaya is silent": no data for 5 minutes, email notification | Done |
-| Outage drill (Wi-Fi down 15 min): alert fired after ~10 min, resolved within 1 min of recovery | Passed |
+| Alert "ikhaya is silent": no data for a few minutes, email notification | Done |
+| Outage drill: Wi-Fi taken down on purpose; the alert fired, then resolved after recovery | Passed |
 | Stay logged in to the Bitwarden app so the vault works offline | Done |
 | Watch 7 days; if it recurs, move to a wired connection or add a network watchdog | Open |
 
 ## Detection, before and after
 | | Before | After |
 |---|---|---|
-| Time to detect | ~12.5 hours (by chance) | ~10 minutes (automatic) |
+| Time to detect | ~12.5 hours (by chance) | minutes (automatic) |
 | How | Password app failed | Email alert |
