@@ -1,0 +1,48 @@
+---
+# Dependabot opens pull requests when a pinned version has an update.
+# Every PR still has to pass the required checks and is merged by hand.
+# Not covered here (bumped by hand, by PR): the gitleaks binary and its checksum
+# in gitleaks.yml, alloy_version in ansible/host.yml, and resume-site (built
+# locally until CI publishes it).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Africa/Johannesburg
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"
+
+  - package-ecosystem: pip
+    directory: "/.github"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Africa/Johannesburg
+    ignore:
+      # Must match the ansible-core installed on ikhaya; upgrade both together.
+      - dependency-name: ansible-core
+    groups:
+      linters:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"
+
+  - package-ecosystem: docker-compose
+    directories:
+      - "/compose/vaultwarden"
+      - "/compose/cloudflared"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Africa/Johannesburg
+    commit-message:
+      prefix: "deploy"
