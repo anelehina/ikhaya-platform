@@ -1,6 +1,6 @@
 ---
-# Lints YAML and Ansible on every pull request and push to main.
-# Both jobs are required checks on main (ruleset protect-main).
+# Lints YAML, Ansible and shell scripts on every pull request and push to main.
+# All three jobs are required checks on main (ruleset protect-main).
 name: lint
 
 on:
@@ -39,3 +39,22 @@ jobs:
         run: pip install -r .github/lint-requirements.txt
       - name: ansible-lint
         run: ansible-lint ansible/
+
+  shellcheck:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned linters
+        run: pip install -r .github/lint-requirements.txt
+      # Finds scripts by their first line (#!/bin/sh, #!/bin/bash), so files
+      # without a .sh extension are checked too. "|| true" because grep exits 1
+      # when a batch of files has no scripts, which isn't an error here.
+      - name: shellcheck
+        run: |
+          { git ls-files -z | xargs -0 grep -lIZE '^#!/(usr/)?bin/(env )?(ba)?sh' || true; } \
+            | xargs -0 -r shellcheck
