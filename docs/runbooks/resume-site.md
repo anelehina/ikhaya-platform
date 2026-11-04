@@ -11,7 +11,8 @@ Browser ──HTTPS──▶ Cloudflare edge ──tunnel (dialled out by ikhaya
 | Part | Where |
 |---|---|
 | Site source | private repo `resume-site` (static HTML/CSS, `nginx.conf`, `Dockerfile`) |
-| Site container | `compose/resume-site/compose.yaml`, image `resume-site:vN` built on ikhaya |
+| Site container | `compose/resume-site/compose.yaml`, image `ghcr.io/anelehina/resume-site:sha-<commit>`, built by GitHub Actions in `resume-site` and published to GHCR as a private package |
+| Registry access | ikhaya pulls with a read-only token (`read:packages` only, with an expiry), stored by `docker login` for root |
 | Tunnel connector | `compose/cloudflared/compose.yaml`; token in `compose/cloudflared/.env` (600, never committed) |
 | Routes and DNS | Cloudflare dashboard: Networking → Tunnels → `ikhaya` → Routes (`anelehina.com`, `www`) |
 | TLS | Cloudflare managed Universal certificate; nothing on ikhaya holds a certificate |
@@ -67,20 +68,23 @@ Nothing to renew on ikhaya. In Cloudflare: anelehina.com → SSL/TLS → Edge Ce
 
 ## Release a new version
 
-1. PR in `resume-site`. If `styles.css` or `theme.js` changed, bump `?v=N` in `site/index.html` to match the new image tag.
-2. On ikhaya, after merging:
+1. PR in `resume-site`. If `styles.css` or `theme.js` changed, bump `?v=N` in `site/index.html`. CI builds the image on the PR (nothing is published).
+2. Merge. CI publishes `ghcr.io/anelehina/resume-site:sha-<commit>`; the run's **Summary** shows the exact tag.
+3. On ikhaya, a branch in `ikhaya-platform` with the new tag:
    ```bash
-   cd ~/resume-site && git switch main && git pull
-   sudo docker build -t resume-site:vN .
-   cd ~/ikhaya-platform/compose/resume-site
-   sed -i 's/image: resume-site:vOLD/image: resume-site:vN/' compose.yaml && grep image compose.yaml
-   sudo docker compose up -d
+   cd ~/ikhaya-platform && git switch main && git pull && git switch -c deploy/resume-site-sha-NEW
+   cd compose/resume-site
+   sed -i 's/resume-site:sha-OLD/resume-site:sha-NEW/' compose.yaml && grep image compose.yaml
+   sudo docker compose pull && sudo docker compose up -d
+   sudo docker compose ps
    curl -s https://anelehina.com/healthz
    ```
-3. Hard-refresh the site and check it. If the old CSS still shows, purge the Cloudflare cache (Caching → Configuration → Purge Everything).
-4. PR in `ikhaya-platform` for the tag bump.
+4. Hard-refresh the site and check it. If the old CSS still shows, purge the Cloudflare cache (Caching → Configuration → Purge Everything).
+5. Commit, push, PR, merge.
 
-**Rollback:** set `compose.yaml` back to the previous tag (the old image is still on ikhaya: `sudo docker image ls resume-site`), `sudo docker compose up -d`, then fix forward with a PR.
+**Rollback:** set `compose.yaml` back to the previous tag (it stays in GHCR, and usually on ikhaya: `sudo docker image ls ghcr.io/anelehina/resume-site`), `sudo docker compose up -d`, then fix forward with a PR.
+
+**Pull fails with `denied` or `unauthorized`:** the read-only token has probably expired. Create a new classic token with `read:packages` only, log in again with `sudo docker login ghcr.io -u anelehina` (paste the token at the hidden prompt, never on the command line), then revoke the old token on GitHub.
 
 ## Drill
 

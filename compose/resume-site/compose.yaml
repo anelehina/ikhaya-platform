@@ -1,7 +1,8 @@
 ---
 services:
   resume-site:
-    image: resume-site:v4
+    # Built by CI in the private resume-site repo, published to GHCR (private).
+    image: ghcr.io/anelehina/resume-site:sha-39dae01
     container_name: resume-site
     restart: unless-stopped
     ports:
