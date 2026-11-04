@@ -1,0 +1,41 @@
+---
+# Lints YAML and Ansible on every pull request and push to main.
+# Both jobs are required checks on main (ruleset protect-main).
+name: lint
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  yamllint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned linters
+        run: pip install -r .github/lint-requirements.txt
+      - name: yamllint
+        run: yamllint .
+
+  ansible-lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned linters
+        run: pip install -r .github/lint-requirements.txt
+      - name: ansible-lint
+        run: ansible-lint ansible/

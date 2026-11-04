@@ -1,3 +1,4 @@
+---
 # Scans every pull request and push to main for secrets and for details that
 # must stay private (see .gitleaks.toml). Fails the check if anything is found.
 name: gitleaks

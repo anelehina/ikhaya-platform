@@ -1,3 +1,4 @@
+---
 # Vaultwarden - self-hosted, Bitwarden-compatible password manager.
 # Reachable only over Tailscale: bound to localhost, published with `tailscale serve`.
 services:

@@ -19,8 +19,10 @@
       ansible.builtin.systemd_service:
         daemon_reload: true
 
+    # No module does "reload, or restart if reload isn't possible", so this
+    # stays a command; it runs only after sshd -t has passed.
     - name: Reload ssh
-      ansible.builtin.command: systemctl reload-or-restart ssh.service
+      ansible.builtin.command: systemctl reload-or-restart ssh.service  # noqa: command-instead-of-module
       changed_when: true
 
   tasks:
@@ -40,7 +42,7 @@
         group: root
         mode: "0755"
 
-    - name: networkd-dispatcher starts only after the Wi-Fi rename
+    - name: Drop-in makes networkd-dispatcher start after the Wi-Fi rename
       ansible.builtin.copy:
         src: files/networkd-dispatcher-after-wifi.conf
         dest: /etc/systemd/system/networkd-dispatcher.service.d/10-after-wifi-rename.conf
