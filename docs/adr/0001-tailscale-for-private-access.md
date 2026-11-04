@@ -11,7 +11,8 @@ All private access goes through **Tailscale**, a WireGuard-based mesh VPN:
 - UFW denies all inbound traffic except on the `tailscale0` interface (plus SSH from the home LAN as break-glass).
 - Private web services are bound to `127.0.0.1` and published to the tailnet with `tailscale serve` (HTTPS, tailnet-only).
 - Devices are addressed by MagicDNS name, not IP.
-- Device key expiry is disabled for the server, laptop and phone, so nothing drops off the tailnet unexpectedly.
+- Device key expiry stays on (180 days) for user devices (laptop, phone); the server is exempt so it can't drop off the tailnet while unattended.
+- New devices must be approved by an admin before they can join (device approval, since 2026-11-03).
 
 ## Alternatives considered
 | Option | Why not |

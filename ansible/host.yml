@@ -19,6 +19,10 @@
       ansible.builtin.systemd_service:
         daemon_reload: true
 
+    - name: Reload ssh
+      ansible.builtin.command: systemctl reload-or-restart ssh.service
+      changed_when: true
+
   tasks:
     - name: Wi-Fi power-saving hook is in place
       ansible.builtin.copy:
@@ -89,6 +93,74 @@
         name: ikhaya-check.timer
         enabled: true
         state: started
+
+    - name: Battery charge-limit service is in place
+      ansible.builtin.copy:
+        src: files/battery-charge-limit.service
+        dest: /etc/systemd/system/battery-charge-limit.service
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Reload systemd
+
+    - name: Apply systemd changes before enabling the battery service
+      ansible.builtin.meta: flush_handlers
+
+    - name: Battery charge limit is applied at every boot
+      ansible.builtin.systemd_service:
+        name: battery-charge-limit.service
+        enabled: true
+        state: started
+
+    # --- SSH second factor (ADR 0006) ---------------------------------------
+    - name: TOTP module for PAM is installed
+      ansible.builtin.apt:
+        name: libpam-google-authenticator
+        state: present
+
+    - name: Check the TOTP secret exists before SSH starts asking for codes
+      ansible.builtin.stat:
+        path: "{{ lookup('env', 'HOME') }}/.google_authenticator"
+      register: totp_secret
+
+    - name: Stop here until the one-time-code app is enrolled
+      ansible.builtin.fail:
+        msg: >-
+          No ~/.google_authenticator yet. Enroll first (google-authenticator, as your own user,
+          no sudo), save the emergency codes, then run host.yml again. Nothing about SSH was changed.
+      when: not totp_secret.stat.exists
+
+    - name: SSH stops asking for the account password (key + code only)
+      ansible.builtin.lineinfile:
+        path: /etc/pam.d/sshd
+        regexp: '^@include common-auth'
+        line: '# @include common-auth   (disabled by Ansible: SSH uses a key plus a one-time code, ADR 0006)'
+        backup: true
+      notify: Reload ssh
+
+    - name: SSH asks for a one-time code
+      ansible.builtin.lineinfile:
+        path: /etc/pam.d/sshd
+        line: 'auth required pam_google_authenticator.so'
+        insertafter: 'disabled by Ansible: SSH uses a key plus a one-time code'
+        backup: true
+      notify: Reload ssh
+
+    - name: SSH hardening drop-in matches Git (key AND code)
+      ansible.builtin.copy:
+        src: files/sshd-10-hardening.conf
+        dest: /etc/ssh/sshd_config.d/10-hardening.conf
+        owner: root
+        group: root
+        mode: "0644"
+        backup: true
+        validate: /usr/sbin/sshd -t -f %s
+      notify: Reload ssh
+
+    - name: Whole SSH configuration is valid before reloading
+      ansible.builtin.command: /usr/sbin/sshd -t
+      changed_when: false
+      check_mode: false
 
     - name: Alloy is installed at the pinned version
       ansible.builtin.apt:
