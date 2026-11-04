@@ -1,0 +1,21 @@
+---
+# yamllint settings for this repo. Run locally: yamllint .
+extends: default
+
+rules:
+  # Long lines are reported but don't fail the check: paths and URLs are long.
+  line-length:
+    max: 120
+    level: warning
+  # GitHub Actions uses `on:` as a key; only check values.
+  truthy:
+    check-keys: false
+  # Settings ansible-lint expects from yamllint.
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: false
+  braces:
+    max-spaces-inside: 1
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true

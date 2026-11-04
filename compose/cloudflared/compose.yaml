@@ -1,3 +1,4 @@
+---
 services:
   cloudflared:
     image: cloudflare/cloudflared:2026.10.3

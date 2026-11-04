@@ -1,0 +1,4 @@
+---
+# ansible-lint settings. Run locally from the repo root: ansible-lint ansible/
+profile: production
+offline: true
