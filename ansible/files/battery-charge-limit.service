@@ -1,0 +1,13 @@
+# Limits the battery's charge level, if the hardware supports it, so an
+# always-plugged-in laptop server doesn't sit at 100% (which wears the battery fastest).
+[Unit]
+Description=Limit battery charge level
+ConditionPathExists=/sys/class/power_supply/BAT0/charge_control_end_threshold
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c 'echo 80 > /sys/class/power_supply/BAT0/charge_control_end_threshold'
+
+[Install]
+WantedBy=multi-user.target

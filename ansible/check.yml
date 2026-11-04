@@ -31,13 +31,29 @@
       changed_when: false
       check_mode: false
 
-    - name: SSH allows keys only and no root login
+    - name: SSH needs a key and a one-time code, no passwords, no root login
       ansible.builtin.assert:
         that:
           - "'passwordauthentication no' in sshd.stdout"
           - "'permitrootlogin no' in sshd.stdout"
-        success_msg: "SSH: keys only, root login off"
-        fail_msg: "SSH hardening is missing"
+          - "'kbdinteractiveauthentication yes' in sshd.stdout"
+          - "'authenticationmethods publickey,keyboard-interactive' in sshd.stdout"
+        success_msg: "SSH: key + one-time code, no passwords, root login off"
+        fail_msg: "SSH hardening or the second factor is missing"
+
+    - name: Read SSH PAM configuration
+      ansible.builtin.command: cat /etc/pam.d/sshd
+      register: pam_sshd
+      changed_when: false
+      check_mode: false
+
+    - name: SSH PAM asks for a one-time code and not the password
+      ansible.builtin.assert:
+        that:
+          - "'auth required pam_google_authenticator.so' in pam_sshd.stdout_lines"
+          - "'@include common-auth' not in pam_sshd.stdout_lines"
+        success_msg: "PAM: one-time code on, password prompt off"
+        fail_msg: "SSH PAM is not in the expected state - run host.yml"
 
     - name: Read Wi-Fi power-saving state
       ansible.builtin.command: iw dev wlp2s0 get power_save
@@ -97,3 +113,17 @@
           - "wifitimer.stdout == 'active'"
         success_msg: "wifi-powersave-off.timer active"
         fail_msg: "Wi-Fi safety-net timer is NOT active - run host.yml"
+
+    - name: Read battery charge limit
+      ansible.builtin.command: cat /sys/class/power_supply/BAT0/charge_control_end_threshold
+      register: battery_limit
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Battery charge limit is applied (where supported)
+      ansible.builtin.assert:
+        that:
+          - battery_limit.rc != 0 or battery_limit.stdout | trim == '80'
+        success_msg: "Battery charge limit in place (or not supported)"
+        fail_msg: "Battery charge limit is not applied - run host.yml"
