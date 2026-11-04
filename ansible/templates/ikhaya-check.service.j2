@@ -1,6 +1,7 @@
 # {{ ansible_managed }}
 # Runs the read-only health check (ansible/check.yml) and logs one clear result line.
-# Monitoring watches for the result line.
+# Monitoring watches for the result line; PASS and FAIL both carry rc= so the
+# latest result can be read as a number (0 = pass).
 [Unit]
 Description=ikhaya read-only health check (ansible check.yml)
 Wants=network-online.target
@@ -9,5 +10,5 @@ After=network-online.target
 [Service]
 Type=oneshot
 WorkingDirectory={{ playbook_dir }}
-ExecStart=/bin/sh -c 'if /usr/bin/ansible-playbook check.yml; then echo "ikhaya-check: PASS"; else rc=$?; echo "ikhaya-check: FAIL rc=$rc"; exit $rc; fi'
+ExecStart=/bin/sh -c 'if /usr/bin/ansible-playbook check.yml; then echo "ikhaya-check: PASS rc=0"; else rc=$?; echo "ikhaya-check: FAIL rc=$rc"; exit $rc; fi'
 TimeoutStartSec=15min
