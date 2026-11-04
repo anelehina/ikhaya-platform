@@ -96,6 +96,14 @@
         enabled: true
         state: started
 
+    - name: Battery charge-limit script is in place
+      ansible.builtin.copy:
+        src: files/battery-charge-limit.sh
+        dest: /usr/local/sbin/battery-charge-limit
+        owner: root
+        group: root
+        mode: "0755"
+
     - name: Battery charge-limit service is in place
       ansible.builtin.copy:
         src: files/battery-charge-limit.service
